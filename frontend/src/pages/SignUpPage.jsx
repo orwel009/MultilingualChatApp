@@ -11,7 +11,7 @@ const SignUpPage = () => {
     fullName: "",
     email: "",
     password: "",
-    preferredLanguage: "en", // Default language
+    preferredLanguage: "English", // Default language
   });
 
   const { signup, isSigningUp } = useAuthStore();

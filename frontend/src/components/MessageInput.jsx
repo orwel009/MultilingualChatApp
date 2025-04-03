@@ -1,13 +1,61 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useChatStore } from "../store/useChatStore";
-import { Image, Send, X } from "lucide-react";
+import { Image, Send, X, Mic } from "lucide-react";
 import toast from "react-hot-toast";
 
 const MessageInput = () => {
   const [text, setText] = useState("");
   const [imagePreview, setImagePreview] = useState(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const recognitionRef = useRef(null);
   const fileInputRef = useRef(null);
   const { sendMessage } = useChatStore();
+
+  // Setup Speech Recognition
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      console.warn("Speech Recognition not supported!");
+      return;
+    }
+
+    const recog = new SpeechRecognition();
+    recog.lang = "en-US"; // You can adjust dynamically if needed
+    recog.interimResults = false;
+    recog.maxAlternatives = 1;
+
+    recog.onresult = (event) => {
+      const speechResult = event.results[0][0].transcript;
+      setText((prev) => prev + " " + speechResult);
+      setIsRecording(false);
+    };
+
+    recog.onerror = (event) => {
+      console.error("Speech recognition error", event.error);
+      toast.error("Speech recognition failed");
+      setIsRecording(false);
+    };
+
+    recog.onend = () => {
+      setIsRecording(false);
+    };
+
+    recognitionRef.current = recog;
+  }, []);
+
+  const handleMicClick = () => {
+    if (recognitionRef.current) {
+      if (!isRecording) {
+        recognitionRef.current.start();
+        setIsRecording(true);
+      } else {
+        recognitionRef.current.stop();
+        setIsRecording(false);
+      }
+    } else {
+      toast.error("Speech recognition not supported in this browser!");
+    }
+  };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -74,7 +122,7 @@ const MessageInput = () => {
           <input
             type="text"
             className="w-full input input-bordered rounded-lg input-sm sm:input-md"
-            placeholder="Type a message..."
+            placeholder="Type or speak..."
             value={text}
             onChange={(e) => setText(e.target.value)}
           />
@@ -95,6 +143,16 @@ const MessageInput = () => {
             <Image size={20} />
           </button>
         </div>
+
+        {/* Mic button */}
+        <button
+          type="button"
+          className={`btn btn-sm btn-circle ${isRecording ? "bg-red-500" : "bg-gray-300"}`}
+          onClick={handleMicClick}
+        >
+          <Mic size={20} />
+        </button>
+
         <button
           type="submit"
           className="btn btn-sm btn-circle"
@@ -106,4 +164,5 @@ const MessageInput = () => {
     </div>
   );
 };
+
 export default MessageInput;

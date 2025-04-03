@@ -12,6 +12,8 @@
   "type": "module",
   "license": "ISC",
   "dependencies": {
+    "@google-cloud/translate": "^8.5.1",
+    "axios": "^1.8.2",
     "bcryptjs": "^2.4.3",
     "chat-app": "file:..",
     "cloudinary": "^2.5.1",
