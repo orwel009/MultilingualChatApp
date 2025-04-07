@@ -89,23 +89,39 @@ export const logout = (req, res) => {
 
 export const updateProfile = async (req, res) => {
   try {
-    const { profilePic, preferredLanguage } = req.body;
+    const { profilePic, preferredLanguage, fullName, email } = req.body;
     const userId = req.user._id;
 
     const updateFields = {};
+
+    // Upload profilePic to Cloudinary if present
     if (profilePic) {
       const uploadResponse = await cloudinary.uploader.upload(profilePic);
       updateFields.profilePic = uploadResponse.secure_url;
     }
+
     if (preferredLanguage) {
       updateFields.preferredLanguage = preferredLanguage;
+    }
+
+    if (fullName) {
+      updateFields.fullName = fullName;
+    }
+
+    if (email) {
+      // Optional: prevent email duplication
+      const existingUser = await User.findOne({ email });
+      if (existingUser && existingUser._id.toString() !== userId.toString()) {
+        return res.status(400).json({ message: "Email is already in use" });
+      }
+      updateFields.email = email;
     }
 
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       updateFields,
       { new: true }
-    );
+    ).select("-password");
 
     res.status(200).json(updatedUser);
   } catch (error) {
@@ -113,6 +129,7 @@ export const updateProfile = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
 
 export const checkAuth = (req, res) => {
   try {
