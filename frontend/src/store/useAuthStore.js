@@ -70,17 +70,38 @@ export const useAuthStore = create((set, get) => ({
 
   updateProfile: async (data) => {
     set({ isUpdatingProfile: true });
+  
     try {
+      console.log("Updating profile with data:", data); // Optional: Debug
+  
       const res = await axiosInstance.put("/auth/update-profile", data);
+  
       set({ authUser: res.data });
       toast.success("Profile updated successfully");
     } catch (error) {
-      console.log("error in update profile:", error);
-      toast.error(error.response.data.message);
+      console.log("Error in update profile:", error);
+      toast.error(error.response?.data?.message || "Something went wrong");
     } finally {
       set({ isUpdatingProfile: false });
     }
   },
+  
+  analytics: null,
+isFetchingAnalytics: false,
+
+fetchAnalytics: async () => {
+  set({ isFetchingAnalytics: true });
+  try {
+    const res = await axiosInstance.get("/auth/analytics");
+    set({ analytics: res.data });
+  } catch (error) {
+    console.log("Error fetching analytics:", error);
+    toast.error("Failed to load analytics");
+  } finally {
+    set({ isFetchingAnalytics: false });
+  }
+},
+
 
   connectSocket: () => {
     const { authUser } = get();
